@@ -1,0 +1,73 @@
+name: Deploy Lumo Starter
+
+on:
+  push:
+    branches: [main]   # adjust if you use a different default branch
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # needed for Wrangler auth via Cloudflare API token
+
+    steps:
+      # ---------------------------------------------------------
+      # 1️⃣ Checkout the repo
+      # ---------------------------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ---------------------------------------------------------
+      # 2️⃣ Set up Node (v20)
+      # ---------------------------------------------------------
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      # ---------------------------------------------------------
+      # 3️⃣ Install front‑end deps and build
+      # ---------------------------------------------------------
+      - name: Install front‑end deps
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Build front‑end
+        working-directory: ./frontend
+        run: npm run build   # produces ./frontend/dist
+
+      # ---------------------------------------------------------
+      # 4️⃣ Install Workers deps
+      # ---------------------------------------------------------
+      - name: Install Workers deps
+        working-directory: ./workers
+        run: npm install
+
+      # ---------------------------------------------------------
+      # 5️⃣ Authenticate with Cloudflare (uses a secret API token)
+      # ---------------------------------------------------------
+      - name: Cloudflare login
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+
+      # ---------------------------------------------------------
+      # 6️⃣ Deploy Workers (API) – this also publishes the D1 schema
+      # ---------------------------------------------------------
+      - name: Deploy Workers
+        working-directory: ./workers
+        run: wrangler publish
+
+      # ---------------------------------------------------------
+      # 7️⃣ Deploy Pages (front‑end) – we point Pages at the built dist
+      # ---------------------------------------------------------
+      - name: Deploy Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          projectName: <YOUR_PAGES_PROJECT_NAME>   # e.g. cloudflare-solid-demo
+          directory: ./frontend/dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}   # default provided by Actions

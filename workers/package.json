@@ -1,0 +1,21 @@
+{
+  "name": "workers",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "publish": "wrangler publish"
+  },
+  "dependencies": {
+    "@cloudflare/kv-asset-handler": "^0.3.0",
+    "@types/node": "^25.3.0",
+    "itty-router": "^4.2.2",
+    "jose": "^5.10.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260227.0",
+    "typescript": "^5.4.5",
+    "wrangler": "^4.67.0"
+  }
+}
